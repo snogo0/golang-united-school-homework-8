@@ -1,8 +1,9 @@
-package main8
+package main
 
 import (
 	"encoding/json"
 	"errors"
+	"flag"
 	"fmt"
 	"io"
 	"os"
@@ -46,28 +47,28 @@ func (b Book) String() string {
 	return s
 }
 
-// var (
-// 	op   *bool
-// 	item *bool
-// 	file *bool
-// )
-//
-// func parseArgs() Arguments {
-// 	op = flag.Bool("operation", false, "choose operation: add, list, findById, remove")
-// 	item = flag.Bool("item", false, "item to work with")
-// 	file = flag.Bool("fileName", false, "file to work with")
-// 	flag.Parse()
-// 	fmt.Println(*op, *item, *file)
-// 	fmt.Println(flag.Args())
-// 	args := make(Arguments)
-// 	if *op {
-// 		args["operation"] = ""
-// 	}
-// 	if *file {
-// 		args["fileName"] = ""
-// 	}
-// 	return args
-// }
+var (
+	op   *bool
+	item *bool
+	file *bool
+)
+
+func parseArgs() Arguments {
+	op = flag.Bool("operation", false, "choose operation: add, list, findById, remove")
+	item = flag.Bool("item", false, "item to work with")
+	file = flag.Bool("fileName", false, "file to work with")
+	flag.Parse()
+	fmt.Println(*op, *item, *file)
+	fmt.Println(flag.Args())
+	args := make(Arguments)
+	if *op {
+		args["operation"] = ""
+	}
+	if *file {
+		args["fileName"] = ""
+	}
+	return args
+}
 
 func check(e error) {
 	if e != nil {
@@ -181,9 +182,9 @@ func Perform(args Arguments, writer io.Writer) error {
 	return nil
 }
 
-// func main() {
-// 	err := Perform(parseArgs(), os.Stdout)
-// 	if err != nil {
-// 		panic(err)
-// 	}
-// }
+func main() {
+	err := Perform(parseArgs(), os.Stdout)
+	if err != nil {
+		panic(err)
+	}
+}
