@@ -11,18 +11,6 @@ import (
 
 type Arguments map[string]string
 
-// type Person map[string]interface{}
-
-// func (p Person) String() string {
-// 	return fmt.Sprintf("%v %v %v", p["id"], p["email"], p["age"])
-// }
-
-// type People []Person
-
-// func (p People) String() string {
-// 	return fmt.Sprint("{" + p.String() + "}")
-// }
-
 type Item struct {
 	Id    string `json:"id"`
 	Email string `json:"email"`
