@@ -82,6 +82,101 @@ func check(e error) {
 	}
 }
 
+func add(args Arguments, writer io.Writer) error {
+	if args[fItem] == "" {
+		s := "-" + fItem + sSpecified
+		writer.Write([]byte(s))
+		return errors.New(s)
+	}
+	var itemToAdd Item
+	err := json.Unmarshal([]byte(args[fItem]), &itemToAdd)
+	check(err)
+	dat, err := os.ReadFile(args[fFileName])
+	var book Book
+	isIdFound := false
+	if err == nil {
+		err = json.Unmarshal(dat, &book)
+		check(err)
+		for _, item := range book {
+			if item.Id == itemToAdd.Id {
+				isIdFound = true
+				break
+			}
+		}
+	}
+	if isIdFound {
+		writer.Write([]byte("Item with id " + itemToAdd.Id + " already exists"))
+	} else {
+		book = append(book, itemToAdd)
+		dat, err = json.Marshal(book)
+		check(err)
+		err = os.WriteFile(args[fFileName], dat, 0666)
+		check(err)
+	}
+	return nil
+}
+
+func list(args Arguments, writer io.Writer) error {
+	dat, err := os.ReadFile(args[fFileName])
+	check(err)
+	var book Book
+	err = json.Unmarshal(dat, &book)
+	check(err)
+	writer.Write([]byte(fmt.Sprint(book)))
+	return nil
+}
+
+func findById(args Arguments, writer io.Writer) error {
+	if args[fId] == "" {
+		s := "-" + fId + sSpecified
+		writer.Write([]byte(s))
+		return errors.New(s)
+	}
+	dat, err := os.ReadFile(args[fFileName])
+	check(err)
+	var book Book
+	err = json.Unmarshal(dat, &book)
+	check(err)
+	for _, item := range book {
+		if item.Id == args[fId] {
+			writer.Write([]byte(fmt.Sprint(item)))
+			break
+		}
+	}
+	return nil
+}
+
+func remove(args Arguments, writer io.Writer) error {
+	if args[fId] == "" {
+		s := "-" + fId + sSpecified
+		writer.Write([]byte(s))
+		return errors.New(s)
+	}
+	dat, err := os.ReadFile(args[fFileName])
+	check(err)
+	var book Book
+	err = json.Unmarshal(dat, &book)
+	check(err)
+	out := make(Book, 0)
+	isIdFound := false
+	for _, item := range book {
+		if item.Id != args[fId] {
+			out = append(out, item)
+		} else {
+			isIdFound = true
+		}
+	}
+	if !isIdFound {
+		writer.Write([]byte("Item with id " + args[fId] + " not found"))
+	} else {
+		dat, err = json.Marshal(out)
+		check(err)
+		err = os.WriteFile(args[fFileName], dat, 0666)
+		check(err)
+	}
+	return nil
+}
+
 func Perform(args Arguments, writer io.Writer) error {
 	if args == nil {
 		s := "-" + fOperation + sSpecified
@@ -100,88 +195,13 @@ func Perform(args Arguments, writer io.Writer) error {
 	}
 	switch args[fOperation] {
 	case "add":
-		if args[fItem] == "" {
-			s := "-" + fItem + sSpecified
-			writer.Write([]byte(s))
-			return errors.New(s)
-		}
-		var itemToAdd Item
-		err := json.Unmarshal([]byte(args[fItem]), &itemToAdd)
-		check(err)
-		dat, err := os.ReadFile(args[fFileName])
-		var book Book
-		isIdFound := false
-		if err == nil {
-			err = json.Unmarshal(dat, &book)
-			check(err)
-			for _, item := range book {
-				if item.Id == itemToAdd.Id {
-					isIdFound = true
-					break
-				}
-			}
-		}
-		if isIdFound {
-			writer.Write([]byte("Item with id " + itemToAdd.Id + " already exists"))
-		} else {
-			book = append(book, itemToAdd)
-			dat, err = json.Marshal(book)
-			check(err)
-			err = os.WriteFile(args[fFileName], dat, 0666)
-			check(err)
-		}
+		return add(args, writer)
 	case "list":
-		dat, err := os.ReadFile(args[fFileName])
-		check(err)
-		var book Book
-		err = json.Unmarshal(dat, &book)
-		check(err)
-		writer.Write([]byte(fmt.Sprint(book)))
+		return list(args, writer)
 	case "findById":
-		if args[fId] == "" {
-			s := "-" + fId + sSpecified
-			writer.Write([]byte(s))
-			return errors.New(s)
-		}
-		dat, err := os.ReadFile(args[fFileName])
-		check(err)
-		var book Book
-		err = json.Unmarshal(dat, &book)
-		check(err)
-		for _, item := range book {
-			if item.Id == args[fId] {
-				writer.Write([]byte(fmt.Sprint(item)))
-				break
-			}
-		}
+		return findById(args, writer)
 	case "remove":
-		if args[fId] == "" {
-			s := "-" + fId + sSpecified
-			writer.Write([]byte(s))
-			return errors.New(s)
-		}
-		dat, err := os.ReadFile(args[fFileName])
-		check(err)
-		var book Book
-		err = json.Unmarshal(dat, &book)
-		check(err)
-		out := make(Book, 0)
-		isIdFound := false
-		for _, item := range book {
-			if item.Id != args[fId] {
-				out = append(out, item)
-			} else {
-				isIdFound = true
-			}
-		}
-		if !isIdFound {
-			writer.Write([]byte("Item with id " + args[fId] + " not found"))
-		} else {
-			dat, err = json.Marshal(out)
-			check(err)
-			err = os.WriteFile(args[fFileName], dat, 0666)
-			check(err)
-		}
+		return remove(args, writer)
 	default:
 		s := "Operation " + args[fOperation] + " not allowed!"
 		writer.Write([]byte(s))
