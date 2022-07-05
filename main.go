@@ -9,6 +9,24 @@ import (
 	"os"
 )
 
+const (
+	fOperation = "operation"
+	fItem      = "item"
+	fId        = "id"
+	fFileName  = "fileName"
+)
+
+const (
+	opAdd      = "add"
+	opList     = "list"
+	opFindById = "findById"
+	opRemove   = "remove"
+)
+
+const (
+	sSpecified = " flag has to be specified"
+)
+
 type Arguments map[string]string
 
 type Item struct {
@@ -42,18 +60,18 @@ var (
 )
 
 func parseArgs() Arguments {
-	op = flag.Bool("operation", false, "choose operation: add, list, findById, remove")
-	item = flag.Bool("item", false, "item to work with")
-	file = flag.Bool("fileName", false, "file to work with")
+	op = flag.Bool(fOperation, false, fmt.Sprintf("choose operation: %s, %s, %s, %s", opAdd, opList, opFindById, opRemove))
+	item = flag.Bool(fItem, false, "item to work with")
+	file = flag.Bool(fFileName, false, "file to work with")
 	flag.Parse()
 	fmt.Println(*op, *item, *file)
 	fmt.Println(flag.Args())
 	args := make(Arguments)
 	if *op {
-		args["operation"] = ""
+		args[fOperation] = ""
 	}
 	if *file {
-		args["fileName"] = ""
+		args[fFileName] = ""
 	}
 	return args
 }
@@ -66,27 +84,31 @@ func check(e error) {
 
 func Perform(args Arguments, writer io.Writer) error {
 	if args == nil {
-		writer.Write([]byte("-operation flag has to be specified"))
-		return errors.New("-operation flag has to be specified")
+		s := "-" + fOperation + sSpecified
+		writer.Write([]byte(s))
+		return errors.New(s)
 	}
-	if args["operation"] == "" {
-		writer.Write([]byte("-operation flag has to be specified"))
-		return errors.New("-operation flag has to be specified")
+	if args[fOperation] == "" {
+		s := "-" + fOperation + sSpecified
+		writer.Write([]byte(s))
+		return errors.New(s)
 	}
-	if args["fileName"] == "" {
-		writer.Write([]byte("-fileName flag has to be specified"))
-		return errors.New("-fileName flag has to be specified")
+	if args[fFileName] == "" {
+		s := "-" + fFileName + sSpecified
+		writer.Write([]byte(s))
+		return errors.New(s)
 	}
-	switch args["operation"] {
+	switch args[fOperation] {
 	case "add":
-		if args["item"] == "" {
-			writer.Write([]byte("-item flag has to be specified"))
-			return errors.New("-item flag has to be specified")
+		if args[fItem] == "" {
+			s := "-" + fItem + sSpecified
+			writer.Write([]byte(s))
+			return errors.New(s)
 		}
 		var itemToAdd Item
-		err := json.Unmarshal([]byte(args["item"]), &itemToAdd)
+		err := json.Unmarshal([]byte(args[fItem]), &itemToAdd)
 		check(err)
-		dat, err := os.ReadFile(args["fileName"])
+		dat, err := os.ReadFile(args[fFileName])
 		var book Book
 		isIdFound := false
 		if err == nil {
@@ -107,11 +129,11 @@ func Perform(args Arguments, writer io.Writer) error {
 			book = append(book, itemToAdd)
 			dat, err = json.Marshal(book)
 			check(err)
-			err = os.WriteFile(args["fileName"], dat, 0666)
+			err = os.WriteFile(args[fFileName], dat, 0666)
 			check(err)
 		}
 	case "list":
-		dat, err := os.ReadFile(args["fileName"])
+		dat, err := os.ReadFile(args[fFileName])
 		check(err)
 		fmt.Println("MAIN-START" + string(dat) + "MAIN-END")
 		var book Book
@@ -119,28 +141,30 @@ func Perform(args Arguments, writer io.Writer) error {
 		check(err)
 		writer.Write([]byte(fmt.Sprint(book)))
 	case "findById":
-		if args["id"] == "" {
-			writer.Write([]byte("-id flag has to be specified"))
-			return errors.New("-id flag has to be specified")
+		if args[fId] == "" {
+			s := "-" + fId + sSpecified
+			writer.Write([]byte(s))
+			return errors.New(s)
 		}
-		dat, err := os.ReadFile(args["fileName"])
+		dat, err := os.ReadFile(args[fFileName])
 		check(err)
 		fmt.Println("MAIN-START" + string(dat) + "MAIN-END")
 		var book Book
 		err = json.Unmarshal(dat, &book)
 		check(err)
 		for _, item := range book {
-			if item.Id == args["id"] {
+			if item.Id == args[fId] {
 				writer.Write([]byte(fmt.Sprint(item)))
 				break
 			}
 		}
 	case "remove":
-		if args["id"] == "" {
-			writer.Write([]byte("-id flag has to be specified"))
-			return errors.New("-id flag has to be specified")
+		if args[fId] == "" {
+			s := "-" + fId + sSpecified
+			writer.Write([]byte(s))
+			return errors.New(s)
 		}
-		dat, err := os.ReadFile(args["fileName"])
+		dat, err := os.ReadFile(args[fFileName])
 		check(err)
 		fmt.Println("MAIN-START" + string(dat) + "MAIN-END")
 		var book Book
@@ -149,23 +173,24 @@ func Perform(args Arguments, writer io.Writer) error {
 		out := make(Book, 0)
 		isIdFound := false
 		for _, item := range book {
-			if item.Id != args["id"] {
+			if item.Id != args[fId] {
 				out = append(out, item)
 			} else {
 				isIdFound = true
 			}
 		}
 		if !isIdFound {
-			writer.Write([]byte("Item with id " + args["id"] + " not found"))
+			writer.Write([]byte("Item with id " + args[fId] + " not found"))
 		} else {
 			dat, err = json.Marshal(out)
 			check(err)
-			err = os.WriteFile(args["fileName"], dat, 0666)
+			err = os.WriteFile(args[fFileName], dat, 0666)
 			check(err)
 		}
 	default:
-		writer.Write([]byte("Operation " + args["operation"] + " not allowed!"))
-		return errors.New("Operation " + args["operation"] + " not allowed!")
+		s := "Operation " + args[fOperation] + " not allowed!"
+		writer.Write([]byte(s))
+		return errors.New(s)
 	}
 	return nil
 }
