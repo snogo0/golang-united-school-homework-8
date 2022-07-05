@@ -112,11 +112,9 @@ func Perform(args Arguments, writer io.Writer) error {
 		var book Book
 		isIdFound := false
 		if err == nil {
-			fmt.Println("MAIN-START" + string(dat) + "MAIN-END")
 			err = json.Unmarshal(dat, &book)
 			check(err)
 			for _, item := range book {
-				fmt.Println("MAIN-START" + fmt.Sprint(item) + "MAIN-END")
 				if item.Id == itemToAdd.Id {
 					isIdFound = true
 					break
@@ -135,7 +133,6 @@ func Perform(args Arguments, writer io.Writer) error {
 	case "list":
 		dat, err := os.ReadFile(args[fFileName])
 		check(err)
-		fmt.Println("MAIN-START" + string(dat) + "MAIN-END")
 		var book Book
 		err = json.Unmarshal(dat, &book)
 		check(err)
@@ -148,7 +145,6 @@ func Perform(args Arguments, writer io.Writer) error {
 		}
 		dat, err := os.ReadFile(args[fFileName])
 		check(err)
-		fmt.Println("MAIN-START" + string(dat) + "MAIN-END")
 		var book Book
 		err = json.Unmarshal(dat, &book)
 		check(err)
@@ -166,7 +162,6 @@ func Perform(args Arguments, writer io.Writer) error {
 		}
 		dat, err := os.ReadFile(args[fFileName])
 		check(err)
-		fmt.Println("MAIN-START" + string(dat) + "MAIN-END")
 		var book Book
 		err = json.Unmarshal(dat, &book)
 		check(err)
